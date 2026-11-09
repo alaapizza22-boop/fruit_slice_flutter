@@ -1,0 +1,15 @@
+{
+  "appName": "Fruit Slice",
+  "applicationId": "com.yourname.fruitslice",
+  "useTestAds": true,
+  "android": {
+    "appId": "ca-app-pub-3940256099942544~3347511713",
+    "interstitial": "ca-app-pub-3940256099942544/1033173712",
+    "rewarded": "ca-app-pub-3940256099942544/5224354917"
+  },
+  "ios": {
+    "appId": "ca-app-pub-3940256099942544~1458002511",
+    "interstitial": "ca-app-pub-3940256099942544/4411468910",
+    "rewarded": "ca-app-pub-3940256099942544/1712485313"
+  }
+}
