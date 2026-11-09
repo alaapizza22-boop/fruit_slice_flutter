@@ -1,0 +1,74 @@
+name: Build app
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      ios:
+        description: 'Also build iOS (unsigned)'
+        type: boolean
+        default: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create project and patch settings
+        run: python3 tools/prepare.py
+      - name: Dependencies
+        working-directory: build_app
+        run: flutter pub get
+      - name: App icon
+        working-directory: build_app
+        continue-on-error: true
+        run: dart run flutter_launcher_icons
+      - name: Build APK
+        working-directory: build_app
+        run: flutter build apk --release
+      - name: Build App Bundle
+        working-directory: build_app
+        run: flutter build appbundle --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build_app/build/app/outputs/flutter-apk/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: build_app/build/app/outputs/bundle/release/app-release.aab
+
+  ios:
+    if: ${{ github.event.inputs.ios == 'true' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create project and patch settings
+        run: python3 tools/prepare.py
+      - name: Dependencies
+        working-directory: build_app
+        run: flutter pub get
+      - name: App icon
+        working-directory: build_app
+        continue-on-error: true
+        run: dart run flutter_launcher_icons
+      - name: Build iOS (no code signing)
+        working-directory: build_app
+        run: flutter build ios --release --no-codesign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-app
+          path: build_app/build/ios/iphoneos/Runner.app
