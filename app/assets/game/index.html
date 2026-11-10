@@ -98,6 +98,23 @@ html,body{margin:0}
 .brand .b2{font-size:72px;letter-spacing:.02em;background:linear-gradient(180deg,#FFF0B0 0%,#FFC23C 48%,#EE8A1A 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 4px 0 #6B3A0C) drop-shadow(0 8px 12px rgba(0,0,0,.5));
   animation:brIn .7s cubic-bezier(.2,1.3,.4,1) .3s both}
 @keyframes brIn{from{opacity:0;transform:translateY(-18px) scale(.85)}to{opacity:1;transform:none}}
+#splash{z-index:50;background:radial-gradient(ellipse at 50% 40%,#5A3A20 0%,#2A1709 62%,#150b05 100%);transition:opacity .45s ease;gap:10px}
+#splash.out{opacity:0;pointer-events:none}
+#splash .bar{width:min(220px,60%);height:8px;border-radius:99px;background:rgba(251,239,216,.14);overflow:hidden;margin-top:22px;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+#splash .bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#FFD66B,#EE8A1A);animation:ld 1.7s cubic-bezier(.3,.7,.3,1) .1s forwards}
+@keyframes ld{to{width:100%}}
+#splash small{font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);opacity:.8}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:2px 0 4px}
+.chip{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:rgba(20,10,4,.45);border:1px solid rgba(251,239,216,.18);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}
+.chip b{color:var(--gold);font-weight:800}
+.row2{display:flex;gap:12px;margin-top:6px}
+.rbtn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:14px;border:1px solid rgba(251,239,216,.2);background:rgba(20,10,4,.4);font-weight:800;font-size:14px}
+.rbtn:active{transform:translateY(2px)}
+.rbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rbtn.muted .slash{display:block}.rbtn .slash{display:none}
+.how{display:flex;flex-direction:column;gap:10px;width:min(320px,100%);text-align:left}
+.how div{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(20,10,4,.45);border:1px solid rgba(251,239,216,.16);font-weight:600;font-size:14px;line-height:1.4;color:var(--ink)}
+.how em{font-style:normal;font-family:var(--font-display);font-size:24px;color:var(--gold);min-width:26px;text-align:center}
 #menu{background:radial-gradient(ellipse at 50% 36%,rgba(30,16,8,.38),rgba(30,16,8,.82))}
 .overlay .btn{animation:btnIn .5s cubic-bezier(.2,1.2,.4,1) both}
 .overlay .btn:nth-of-type(1){animation-delay:.45s}.overlay .btn:nth-of-type(2){animation-delay:.55s}.overlay .btn:nth-of-type(3){animation-delay:.65s}
@@ -150,13 +167,29 @@ html,body{margin:0}
     </div>
     <div class="banner" id="banner" hidden></div>
 
+    <div class="overlay" id="splash"><div class="logoWrap" aria-hidden="true"><img class="lh a" alt=""><img class="lh b" alt=""><i class="gleam"></i></div>
+      <h1 class="brand"><span class="b1">Fruit</span><span class="b2">Slice</span></h1>
+      <div class="bar"><i></i></div><small>Sharpening the blades…</small></div>
+
     <div class="overlay" id="menu">
       <div class="logoWrap" aria-hidden="true"><img class="lh a" alt=""><img class="lh b" alt=""><i class="gleam"></i></div>
       <h1 class="brand"><span class="b1">Fruit</span><span class="b2">Slice</span></h1>
-      <p>Swipe across fruit and veggies to slice them. Stay away from the bombs.</p>
+      <div class="chips"><span class="chip">★ <b id="stTot">0</b>/90</span><span class="chip">Level <b id="stLv">1</b></span></div>
       <button class="btn primary" type="button" data-act="levels">Levels<small>Next up: level <span id="nextLv">1</span></small></button>
       <button class="btn" type="button" data-act="classic">Classic<small>3 lives · best <span id="bestClassic">0</span></small></button>
       <button class="btn" type="button" data-act="timed">Time Attack<small>60 seconds · best <span id="bestTimed">0</span></small></button>
+      <div class="row2"><button class="rbtn" type="button" data-act="how"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>How to play</button>
+        <button class="rbtn" id="muteBtn2" type="button" data-act="mute2"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path class="slash" d="M3 3l18 18"/></svg>Sound</button></div>
+    </div>
+
+    <div class="overlay" id="howOv" hidden>
+      <h2>How to play</h2>
+      <div class="how">
+        <div><em>1</em>Swipe your finger across fruit to slice it. Slice several in one swipe for combos.</div>
+        <div><em>2</em>Never touch a bomb. In Classic you have 3 lives, so don't let fruit fall.</div>
+        <div><em>3</em>Golden fruit pays 5×, ice fruit slows time, and split fruit bursts into more.</div>
+      </div>
+      <button class="btn primary" type="button" data-act="menu">Got it</button>
     </div>
 
     <div class="overlay scroll" id="levelsOv" hidden>
@@ -289,7 +322,12 @@ function paintFace(c,def,R){
   const sh=c.createRadialGradient(-R*.3,-R*.3,0,-R*.3,-R*.3,R*.8);sh.addColorStop(0,'rgba(255,255,255,.3)');sh.addColorStop(1,'rgba(255,255,255,0)');
   c.fillStyle=sh;c.beginPath();c.arc(0,0,R*.92,0,TAU);c.fill();
 }
-function newPiece(){const cv=document.createElement('canvas');cv.width=cv.height=SZ;return[cv,cv.getContext('2d')]}
+const piecePool=[];
+function mkPiece(){const cv=document.createElement('canvas');cv.width=cv.height=SZ;cv._p=1;cv._f=0;return cv}
+function newPiece(){let cv=piecePool.pop();if(cv){cv._f=0;const c=cv.getContext('2d');c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.clearRect(0,0,SZ,SZ);return[cv,c]}
+  cv=mkPiece();return[cv,cv.getContext('2d')]}
+function relPieces(a){for(const h of a){const cv=h.ch&&h.ch.cv;if(cv&&cv._p&&!cv._f){cv._f=1;piecePool.push(cv)}}}
+function prewarmPool(n){if(n<=0)return;const cv=mkPiece();cv._f=1;cv.getContext('2d');piecePool.push(cv);setTimeout(()=>prewarmPool(n-1),60)}
 function halfPlane(c,P,d,n,s){
   const L=SZ*1.6;c.beginPath();
   c.moveTo(P[0]-d[0]*L,P[1]-d[1]*L);c.lineTo(P[0]+d[0]*L,P[1]+d[1]*L);
@@ -581,27 +619,25 @@ function tone(type,f0,f1,dur,vol,delay){
   g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
   o.connect(g).connect(ac.destination);o.start(t);o.stop(t+dur+.02);
 }
+let nbuf=null;
+function noiseBuf(){if(!nbuf||nbuf.sampleRate!==ac.sampleRate){const n=Math.floor(ac.sampleRate*1.5);nbuf=ac.createBuffer(1,n,ac.sampleRate);const d=nbuf.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1}return nbuf}
 function noise(dur,f0,f1,vol){
   if(!ac||save.muted)return;
-  const n=Math.floor(ac.sampleRate*dur),buf=ac.createBuffer(1,n,ac.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
-  const s=ac.createBufferSource();s.buffer=buf;
+  const s=ac.createBufferSource();s.buffer=noiseBuf();
   const f=ac.createBiquadFilter();f.type='bandpass';f.Q.value=.9;
   const t=ac.currentTime;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);
   const g=ac.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
-  s.connect(f).connect(g).connect(ac.destination);s.start(t);
+  s.connect(f).connect(g).connect(ac.destination);s.start(t,Math.random()*.4);s.stop(t+dur+.05);
 }
 function nz(dur,type,f0,f1,q,vol,delay){
   if(!ac||save.muted)return;
-  const n=Math.max(1,Math.floor(ac.sampleRate*dur)),buf=ac.createBuffer(1,n,ac.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
-  const s=ac.createBufferSource();s.buffer=buf;
+  const s=ac.createBufferSource();s.buffer=noiseBuf();
   const f=ac.createBiquadFilter();f.type=type;f.Q.value=q;
   const t=ac.currentTime+(delay||0);
   f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);
   const g=ac.createGain();g.gain.setValueAtTime(.0001,t);
   g.gain.exponentialRampToValueAtTime(vol,t+Math.min(.006,dur*.3));g.gain.exponentialRampToValueAtTime(.001,t+dur);
-  s.connect(f).connect(g).connect(ac.destination);s.start(t);
+  s.connect(f).connect(g).connect(ac.destination);s.start(t,Math.random()*.4);s.stop(t+dur+.05);
 }
 /* knife through produce: blade swish, thin metal ring, wet cut, body thump, crunch for firm items, splash for juicy ones.
    w=body weight, c=crunch, j=juice, sw=swish pitch, soft=muffled swish, k=hard knock, h=hollow pop */
@@ -692,7 +728,7 @@ function renderLives(){
   if(mode==='timed'){el.innerHTML='<span class="clock" id="clock">'+Math.ceil(timeLeft)+'</span>';return}
   el.innerHTML=heart(lives>0)+heart(lives>1)+heart(lives>2);
 }
-function showBest(){$('bestClassic').textContent=save.best.classic;$('bestTimed').textContent=save.best.timed;$('nextLv').textContent=unlockedUpTo()}
+function showBest(){$('bestClassic').textContent=save.best.classic;$('bestTimed').textContent=save.best.timed;$('nextLv').textContent=unlockedUpTo();$('stLv').textContent=unlockedUpTo();{let t=0;for(const k in save.stars)t+=save.stars[k];$('stTot').textContent=t}}
 function banner(t1,t2){
   const b=$('banner');b.innerHTML='<b>'+t1+'</b><span>'+t2+'</span>';b.hidden=false;
   b.classList.remove('show');void b.offsetWidth;b.classList.add('show');
@@ -825,7 +861,7 @@ function trySlice(ax,ay,bx,by){
   const ang=(Math.abs(bx-ax)+Math.abs(by-ay)<2)?rnd(0,Math.PI):Math.atan2(by-ay,bx-ax);
   for(const o of objs){
     if(o.sliced||o.deco)continue;
-    if(segDist(o.x,o.y,ax,ay,bx,by)<(o.kind==='bomb'?o.r*.85:o.r*(o.def.hit||1)*.78)){
+    if(segDist(o.x,o.y,ax,ay,bx,by)<(o.kind==='bomb'?o.r*.85:o.r*(o.def.hit||1)*(NATIVE?.95:.82))){
       sliceObj(o,ang,ax,ay);
       if(state!=='play')break;
     }
@@ -834,7 +870,7 @@ function trySlice(ax,ay,bx,by){
 }
 
 /* ---------- game flow ---------- */
-function hideAll(){['menu','levelsOv','pauseOv','overOv','winOv'].forEach(id=>{$(id).hidden=true})}
+function hideAll(){['menu','howOv','levelsOv','pauseOv','overOv','winOv'].forEach(id=>{$(id).hidden=true})}
 function startGame(m,n){
   if(!ready||adCb)return;
   roundsSinceAd++;
@@ -844,7 +880,7 @@ function startGame(m,n){
 function revive(){
   if(!requestAd('rewarded',ok=>{
     if(!ok){$('reviveBtn').hidden=true;return}
-    reviveUsed=true;objs=[];halves=[];queue=[];parts=[];
+    reviveUsed=true;relPieces(halves);objs=[];halves=[];queue=[];parts=[];
     if(mode==='timed'){timeLeft=15;const c=$('clock');if(c)c.textContent=15}else{lives=1;renderLives()}
     hideAll();$('hud').hidden=false;$('goal').hidden=mode!=='level';
     spawnT=1;state='play';
@@ -856,7 +892,7 @@ function startGameNow(m,n){
   sfx('start');
   mode=m;
   if(m==='level'){level=n;LV=levelDef(n)}else LV=null;
-  objs=[];halves=[];parts=[];splats=[];pops=[];trail=[];queue=[];flashes=[];
+  relPieces(halves);objs=[];halves=[];parts=[];splats=[];pops=[];trail=[];queue=[];flashes=[];
   lives=3;timeLeft=60;elapsed=0;spawnT=.7;swiping=false;swipeCount=0;prog=0;freezeT=0;splitQ=[];specialCD=6;comboN=0;
   setScore(0);renderLives();
   hideAll();$('hud').hidden=false;
@@ -904,7 +940,7 @@ function openLevels(){
   state='menu';
 }
 function toMenu(){
-  freezeT=0;splitQ=[];state='menu';objs=[];halves=[];parts=[];queue=[];flashes=[];
+  freezeT=0;splitQ=[];state='menu';relPieces(halves);objs=[];halves=[];parts=[];queue=[];flashes=[];
   hideAll();$('hud').hidden=true;$('goal').hidden=true;$('banner').hidden=true;$('menu').hidden=false;
   showBest();seedDeco();
 }
@@ -959,7 +995,7 @@ function update(dt){
   for(const h of halves){
     if(h.delay>0){h.delay-=sdt;h.x+=h.pvx*sdt;h.y+=h.pvy*sdt;h.pvy+=h.g*sdt;h.rot+=h.pvr*sdt;if(h.delay<=0){h.vx=h.pvx*.6+h.ex;h.vy=h.pvy*.6+h.ey}continue}
     h.x+=h.vx*sdt;h.y+=h.vy*sdt;h.vy+=h.g*sdt;h.rot+=h.vr*sdt}
-  halves=halves.filter(h=>h.y<H+h.r*3);
+  {const keep=[],gone=[];for(const h of halves)(h.y<H+h.r*3?keep:gone).push(h);if(gone.length){relPieces(gone);halves=keep}}
   for(const f of flashes)f.life-=dt/.16;
   flashes=flashes.filter(f=>f.life>0);
   for(const p of parts){p.x+=p.vx*sdt;p.y+=p.vy*sdt;p.vy+=H*1.4*sdt;if(p.shard)p.rot+=p.vr*sdt;p.life-=sdt/p.dur}
@@ -1059,7 +1095,7 @@ cv.addEventListener('pointermove',e=>{
     trail.push({x:p.x,y:p.y,t:performance.now()});
     {const dx=p.x-last.x,dy=p.y-last.y;if(dx*dx+dy*dy>4){let d=Math.atan2(dy,dx)-knife.ang;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;knife.ang+=d*.55}knife.x=p.x;knife.y=p.y}
     if(trail.length>40)trail.shift();
-    if(parts.length>400)parts.splice(0,parts.length-400);
+    if(parts.length>(NATIVE?240:400))parts.splice(0,parts.length-(NATIVE?240:400));
     {const sp=Math.hypot(p.x-last.x,p.y-last.y),tn=performance.now();if(sp>14&&tn-lastWhoosh>150&&tn-lastSliceT>120){lastWhoosh=tn;sfx('whoosh',Math.min(1,sp/50))}}
     trySlice(last.x,last.y,p.x,p.y);
     last=p;
@@ -1087,13 +1123,15 @@ stage.addEventListener('click',e=>{
   if(a==='classic'||a==='timed')startGame(a);
   else if(a==='levels')openLevels();
   else if(a==='menu')toMenu();
+  else if(a==='how'){hideAll();$('howOv').hidden=false}
+  else if(a==='mute2'){save.muted=!save.muted;persist();renderMute();ensureAudio()}
   else if(a==='resume')setPause(false);
   else if(a==='again')startGame(mode,level);
   else if(a==='revive')revive();
   else if(a==='next')startGame('level',level+1);
 });
 $('pauseBtn').addEventListener('click',()=>setPause(true));
-function renderMute(){$('muteBtn').classList.toggle('muted',save.muted);$('muteBtn').setAttribute('aria-label',save.muted?'Unmute sound':'Mute sound')}
+function renderMute(){$('muteBtn2').classList.toggle('muted',save.muted);$('muteBtn').classList.toggle('muted',save.muted);$('muteBtn').setAttribute('aria-label',save.muted?'Unmute sound':'Mute sound')}
 $('muteBtn').addEventListener('click',()=>{save.muted=!save.muted;persist();renderMute();ensureAudio()});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'||e.key==='p'||e.key==='P'){if(state==='play')setPause(true);else if(state==='paused')setPause(false)}
@@ -1101,12 +1139,13 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(true)});
 
 document.querySelectorAll('.lh').forEach(i=>{i.src=PHOTO.apple});
+setTimeout(()=>{const sp=$('splash');sp.classList.add('out');setTimeout(()=>{sp.hidden=true},500)},1900);
 renderMute();
 loadPhotos().then(()=>{
   FRUITS.forEach(f=>{bodySpr[f.id]=buildSprite(f)});
   FRUITS.forEach(f=>{if(f.mode==='crumbs'){fleshSpr[f.id]=buildFlesh(f);chunkSpr[f.id]=buildChunks(f)}});
   knifeSpr=makeKnife();ready=true;
-  showBest();seedDeco();requestAnimationFrame(frame);
+  showBest();seedDeco();prewarmPool(NATIVE?14:8);requestAnimationFrame(frame);
 });
 })();
 </script>

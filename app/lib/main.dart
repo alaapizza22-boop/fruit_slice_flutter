@@ -177,7 +177,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _ads = AdsManager(widget.cfg);
-    _ads.init().catchError((Object e) {
+    Future<void>.delayed(const Duration(seconds: 4)).then((_) => _ads.init()).catchError((Object e) {
       lastError.value = 'Ads init: $e';
     });
     _web = WebViewController()
