@@ -34,10 +34,10 @@ jobs:
         run: dart run flutter_launcher_icons
       - name: Build APK
         working-directory: build_app
-        run: flutter build apk --release
+        run: flutter build apk --release --no-shrink
       - name: Build App Bundle
         working-directory: build_app
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --no-shrink
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
@@ -46,6 +46,32 @@ jobs:
         with:
           name: android-aab
           path: build_app/build/app/outputs/bundle/release/app-release.aab
+
+  android-noads:
+    # Diagnostic build: same game, no ads SDK. If this one opens and the main one does not, the ads setup is the problem.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create project and patch settings
+        run: python3 tools/prepare.py --noads
+      - name: Dependencies
+        working-directory: build_app_noads
+        run: flutter pub get
+      - name: Build APK
+        working-directory: build_app_noads
+        run: flutter build apk --release --no-shrink
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-NO-ADS
+          path: build_app_noads/build/app/outputs/flutter-apk/app-release.apk
 
   ios:
     if: ${{ github.event.inputs.ios == 'true' }}
