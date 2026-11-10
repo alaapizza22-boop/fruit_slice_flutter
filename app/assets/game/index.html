@@ -1,8 +1,5 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><style>html{background:#1E120A}</style>
 <title>Fruit Slice</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800&display=swap">
@@ -33,6 +30,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   background:var(--bg2);border:1px solid var(--line)}
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 
+html,body{margin:0}
+.native body{padding:0}
+.native .stage{max-width:none;border-radius:0;border:0}
+.native .hud{padding-top:max(26px,env(safe-area-inset-top,0px))}
 .hud{position:absolute;inset:0 0 auto 0;display:flex;align-items:flex-start;justify-content:space-between;
   padding:14px 14px 0;pointer-events:none}
 .lives{display:flex;gap:4px;min-width:84px;align-items:center;font-variant-numeric:tabular-nums}
@@ -129,9 +130,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .lv:disabled{opacity:.38;cursor:default}
 </style>
 
-<style>html{background:#1E120A}</style>
-</head>
-<body>
+</head><body>
 <div class="wrap" dir="ltr" lang="en">
   <div class="stage" id="stage">
     <canvas id="cv" aria-label="Game board"></canvas>
@@ -197,8 +196,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 (function(){
 'use strict';
 const TAU=Math.PI*2;
+const NATIVE=typeof AppChannel!=='undefined';
+if(NATIVE)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
-const stage=$('stage'),cv=$('cv'),ctx=cv.getContext('2d');
+const stage=$('stage'),cv=$('cv'),ctx=cv.getContext('2d',{alpha:false});
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MAXLV=30;
@@ -425,8 +426,7 @@ function drawFruit(o){
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,rr,0,TAU);ctx.fill();
   }
   ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.rot);
-  ctx.shadowColor=sp?'rgba('+sp.a+',.9)':'rgba(0,0,0,.5)';ctx.shadowBlur=sp?o.r*.5:o.r*.22;ctx.shadowOffsetY=sp?0:o.r*.08;
-  ctx.drawImage(sp?specialSprite(o.def,o.special):bodySpr[o.def.id],-C*k,-C*k,SZ*k,SZ*k);ctx.restore();
+    ctx.drawImage(sp?specialSprite(o.def,o.special):bodySpr[o.def.id],-C*k,-C*k,SZ*k,SZ*k);ctx.restore();
   if(sp){
     for(let i=0;i<3;i++){const a=T*2.2+i*2.1,d=o.r*(1.05+.12*Math.sin(T*5+i)),x=o.x+Math.cos(a)*d,y=o.y+Math.sin(a)*d,z=o.r*.13;
       ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(x,y-z);ctx.lineTo(x+z*.28,y-z*.28);ctx.lineTo(x+z,y);ctx.lineTo(x+z*.28,y+z*.28);ctx.lineTo(x,y+z);ctx.lineTo(x-z*.28,y+z*.28);ctx.lineTo(x-z,y);ctx.lineTo(x-z*.28,y-z*.28);ctx.closePath();ctx.fill()}
@@ -438,13 +438,12 @@ function drawFruit(o){
 function drawHalf(h){
   const k=h.r/U,ch=h.ch;
   ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.rot);
-  ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=4;
   ctx.drawImage(ch.cv,(ch.ox-ch.cx)*k,(ch.oy-ch.cy)*k,ch.w*k,ch.h*k);ctx.restore();
 }
 function drawBomb(o){
   const r=o.r;
   ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.rot*.3);
-  ctx.shadowColor='rgba(232,69,60,.6)';ctx.shadowBlur=r*.55;
+  
   const g=ctx.createRadialGradient(-r*.3,-r*.35,r*.1,0,0,r*1.1);
   g.addColorStop(0,'#6A7580');g.addColorStop(.55,'#232A31');g.addColorStop(1,'#0B0F12');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,r*.08,r,0,TAU);ctx.fill();
@@ -561,7 +560,7 @@ function buildBg(){
 function resize(){
   const r=stage.getBoundingClientRect();
   W=Math.max(200,Math.round(r.width));H=Math.max(300,Math.round(r.height));
-  DPR=Math.min(2,window.devicePixelRatio||1);
+  DPR=Math.min(NATIVE?1.5:2,window.devicePixelRatio||1);
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
   ctx.setTransform(DPR,0,0,DPR,0,0);
   buildBg();
@@ -628,8 +627,7 @@ function slash(id){
   if(s.k>0){tone('sine',320*v,170*v,.09,.22*s.k,.01);nz(.025,'bandpass',1800*v,1200,1.4,.35*s.k,.01)}
   if(s.h>0)tone('sine',(560-s.h*60)*v,300,.07,.12*s.h,.02);
 }
-/* ---- native app bridge (Flutter WebView). In a normal browser AppChannel is absent and all of this stays inert. ---- */
-const NATIVE=typeof AppChannel!=='undefined';
+/* ---- native app bridge ---- */
 function nativeSend(o){try{AppChannel.postMessage(JSON.stringify(o))}catch(e){}}
 let adCb=null,adTimer=0,roundsSinceAd=0,reviveUsed=false;
 function requestAd(kind,cb){
@@ -646,7 +644,7 @@ window.__back=function(){
   if(state==='menu'&&$('menu').hidden===false)return 'exit';
   toMenu();return 'ok';
 };
-function vib(n){try{if(NATIVE){if(!save.muted)nativeSend({t:'vib',n:Array.isArray(n)?n[0]:n});return}if(!save.muted&&navigator.vibrate)navigator.vibrate(n)}catch(e){}}
+function vib(n){try{if(NATIVE){nativeSend({t:'vib',n:Array.isArray(n)?n[0]:n});return}if(!save.muted&&navigator.vibrate)navigator.vibrate(n)}catch(e){}}
 function sfx(k,arg){
   try{
     if(k==='slice')slash(arg);
@@ -705,7 +703,7 @@ function banner(t1,t2){
 function spawn(kind,deco,forceId){
   const def=kind==='bomb'?null:(forceId?DEF[forceId]:FRUITS[Math.floor(Math.random()*FRUITS.length)]);
   const r=(kind==='bomb'?.07:def.r)*W;
-  const x=W*rnd(.14,.86),g=H*1.55,apex=H*rnd(.5,.8);
+  const x=W*rnd(.14,.86),g=H*1.1,apex=H*rnd(.42,.7);
   const vy=-Math.sqrt(2*g*apex),Tf=2*Math.abs(vy)/g;
   const x2=W*rnd(.12,.88);
   objs.push({kind,def,x,y:H+r,vx:(x2-x)/Tf,vy,r,rot:rnd(0,TAU),vr:rnd(-4,4),g,sliced:false,deco:!!deco});
@@ -1113,5 +1111,4 @@ loadPhotos().then(()=>{
 })();
 </script>
 
-</body>
-</html>
+</body></html>

@@ -7,7 +7,8 @@ root = pathlib.Path(__file__).resolve().parent.parent
 cfg = json.loads((root / 'app/assets/app_config.json').read_text())
 org, name = cfg['applicationId'].rsplit('.', 1)
 noads = '--noads' in sys.argv
-b = root / ('build_app_noads' if noads else 'build_app')
+crash = '--crashlog' in sys.argv
+b = root / ('build_app_noads' if noads else ('build_app_crash' if crash else 'build_app'))
 shutil.rmtree(b, ignore_errors=True)
 subprocess.check_call(['flutter', 'create', '--platforms=android,ios', '--org', org,
                        '--project-name', name, b.name], cwd=root)
@@ -26,6 +27,7 @@ mf = b / 'android/app/src/main/AndroidManifest.xml'
 t = mf.read_text()
 t = re.sub(r'android:label="[^"]*"', 'android:label="%s"' % cfg['appName'], t, count=1)
 perms = '<uses-permission android:name="android.permission.INTERNET"/>\n    '
+perms += '<uses-permission android:name="android.permission.VIBRATE"/>\n    '
 if not noads:
     perms += '<uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n    '
 t = t.replace('<application', perms + '<application', 1)
@@ -34,6 +36,46 @@ meta = ('<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" '
 if not noads:
     t = re.sub(r'(<application[^>]*>)', lambda m: m.group(1) + '\n        ' + meta, t, count=1)
 assert noads or 'APPLICATION_ID' in t, 'AdMob meta-data was not inserted'
+if crash:
+    # Diagnostic: show the uncaught native exception as a Toast so a launch crash can be read off the screen.
+    src = None
+    for ext in ('kt', 'java'):
+        src = next((b / 'android/app/src/main').rglob('MainActivity.' + ext), None) or src
+    pkg = re.search(r'package\s+([\w.]+)', src.read_text()).group(1)
+    (src.parent / 'CrashApp.kt').write_text('''package %s
+
+import android.app.Application
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
+
+class CrashApp : Application() {
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        val old = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { th, e ->
+            try {
+                val sb = StringBuilder(e.toString())
+                var c = e.cause
+                while (c != null) { sb.append("\\nCAUSE: ").append(c.toString()); c = c.cause }
+                e.stackTrace.take(6).forEach { sb.append("\\n  ").append(it.toString()) }
+                val msg = sb.toString()
+                Thread {
+                    Looper.prepare()
+                    repeat(3) { Toast.makeText(base, msg, Toast.LENGTH_LONG).show() }
+                    Handler(Looper.myLooper()!!).postDelayed({ Looper.myLooper()!!.quit() }, 9000)
+                    Looper.loop()
+                }.start()
+                Thread.sleep(9000)
+            } catch (x: Throwable) {}
+            old?.uncaughtException(th, e)
+        }
+    }
+}
+''' % pkg)
+    t = t.replace('android:name="${applicationName}"', 'android:name=".CrashApp"', 1)
+    assert 'CrashApp' in t, 'manifest not patched'
 mf.write_text(t)
 
 # ---- Android min SDK (ads + webview need >= 23/24)

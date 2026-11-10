@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vibration/vibration.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// Google's public sample ad units. Used whenever "useTestAds" is true in assets/app_config.json.
@@ -34,7 +35,7 @@ Future<void> main() async {
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark(),
         home: Scaffold(
-          body: SafeArea(
+          body: SafeArea(top: false, bottom: false, 
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: SelectableText('Startup error:\n$e\n\n$s'),
@@ -116,7 +117,14 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       switch (j['t']) {
         case 'vib':
           final n = (j['n'] as num?)?.toInt() ?? 15;
-          n <= 12 ? HapticFeedback.lightImpact() : HapticFeedback.mediumImpact();
+          final ms = n <= 12 ? 15 : (n <= 24 ? 28 : 60);
+          Vibration.hasVibrator().then((has) {
+            if (has == true) {
+              Vibration.vibrate(duration: ms, amplitude: 160);
+            } else {
+              n <= 12 ? HapticFeedback.lightImpact() : HapticFeedback.mediumImpact();
+            }
+          });
           break;
         case 'ad':
           final kind = j['kind'] as String;
@@ -149,7 +157,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         },
         child: Scaffold(
           backgroundColor: const Color(0xFF1E120A),
-          body: SafeArea(
+          body: SafeArea(top: false, bottom: false, 
             child: Stack(children: [
               WebViewWidget(controller: _web),
               ValueListenableBuilder<String?>(
