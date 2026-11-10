@@ -17,14 +17,34 @@ const _testRewarded = {
   'ios': 'ca-app-pub-3940256099942544/1712485313',
 };
 
+final ValueNotifier<String?> lastError = ValueNotifier<String?>(null);
+
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations(
-      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  final cfg = jsonDecode(await rootBundle.loadString('assets/app_config.json'))
-      as Map<String, dynamic>;
-  runApp(App(cfg: cfg));
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    FlutterError.onError = (d) => lastError.value = d.exceptionAsString();
+    try {
+      await SystemChrome.setPreferredOrientations(
+          [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      final cfg = jsonDecode(await rootBundle.loadString('assets/app_config.json'))
+          as Map<String, dynamic>;
+      runApp(App(cfg: cfg));
+    } catch (e, s) {
+      runApp(MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: SelectableText('Startup error:\n$e\n\n$s'),
+            ),
+          ),
+        ),
+      ));
+    }
+  }, (e, s) => lastError.value = '$e');
 }
 
 class App extends StatelessWidget {
@@ -155,10 +175,16 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _ads = AdsManager(widget.cfg)..init();
+    _ads = AdsManager(widget.cfg);
+    _ads.init().catchError((Object e) {
+      lastError.value = 'Ads init: $e';
+    });
     _web = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF1E120A))
+      ..setNavigationDelegate(NavigationDelegate(
+        onWebResourceError: (e) => lastError.value = 'WebView: ${e.description}',
+      ))
       ..addJavaScriptChannel('AppChannel', onMessageReceived: _onMessage)
       ..loadFlutterAsset('assets/game/index.html');
   }
@@ -215,7 +241,29 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         },
         child: Scaffold(
           backgroundColor: const Color(0xFF1E120A),
-          body: SafeArea(child: WebViewWidget(controller: _web)),
+          body: SafeArea(
+            child: Stack(children: [
+              WebViewWidget(controller: _web),
+              ValueListenableBuilder<String?>(
+                valueListenable: lastError,
+                builder: (_, err, __) => err == null
+                    ? const SizedBox.shrink()
+                    : Align(
+                        alignment: Alignment.topCenter,
+                        child: GestureDetector(
+                          onTap: () => lastError.value = null,
+                          child: Container(
+                            width: double.infinity,
+                            color: const Color(0xDD7A1010),
+                            padding: const EdgeInsets.all(8),
+                            child: Text('Error (tap to hide): $err',
+                                style: const TextStyle(fontSize: 11)),
+                          ),
+                        ),
+                      ),
+              ),
+            ]),
+          ),
         ),
       );
 }
