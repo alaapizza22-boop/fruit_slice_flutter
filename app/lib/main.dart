@@ -79,6 +79,12 @@ class AdsManager {
 
   void Function(bool ready)? onRewardedState;
   bool _loadingI = false, _loadingR = false, _started = false;
+  bool _playing = false;
+  set playing(bool v) {
+    _playing = v;
+    if (!v) ensureLoaded();
+  }
+
   int _failI = 0, _failR = 0;
 
   Duration _backoff(int fails) =>
@@ -100,7 +106,7 @@ class AdsManager {
   }
 
   void _loadInterstitial() {
-    if (_loadingI || _interstitial != null) return;
+    if (_playing || _loadingI || _interstitial != null) return;
     _loadingI = true;
     InterstitialAd.load(
       adUnitId: _interstitialId,
@@ -123,7 +129,7 @@ class AdsManager {
   }
 
   void _loadRewarded() {
-    if (_loadingR || _rewarded != null) return;
+    if (_playing || _loadingR || _rewarded != null) return;
     _loadingR = true;
     RewardedAd.load(
       adUnitId: _rewardedId,
@@ -151,7 +157,7 @@ class AdsManager {
   void showInterstitial(void Function() done) {
     final ad = _interstitial;
     if (ad == null) {
-      _loadInterstitial();
+      Future<void>.delayed(const Duration(seconds: 3), _loadInterstitial);
       done();
       return;
     }
@@ -159,12 +165,12 @@ class AdsManager {
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
         a.dispose();
-        _loadInterstitial();
+        Future<void>.delayed(const Duration(seconds: 3), _loadInterstitial);
         done();
       },
       onAdFailedToShowFullScreenContent: (a, _) {
         a.dispose();
-        _loadInterstitial();
+        Future<void>.delayed(const Duration(seconds: 3), _loadInterstitial);
         done();
       },
     );
@@ -175,7 +181,7 @@ class AdsManager {
   void showRewarded(void Function(bool earned) done) {
     final ad = _rewarded;
     if (ad == null) {
-      _loadRewarded();
+      Future<void>.delayed(const Duration(seconds: 3), _loadRewarded);
       done(false);
       return;
     }
@@ -185,12 +191,12 @@ class AdsManager {
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
         a.dispose();
-        _loadRewarded();
+        Future<void>.delayed(const Duration(seconds: 3), _loadRewarded);
         done(earned);
       },
       onAdFailedToShowFullScreenContent: (a, _) {
         a.dispose();
-        _loadRewarded();
+        Future<void>.delayed(const Duration(seconds: 3), _loadRewarded);
         done(false);
       },
     );
@@ -253,6 +259,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     try {
       final j = jsonDecode(m.message) as Map<String, dynamic>;
       switch (j['t']) {
+        case 'play':
+          _ads.playing = j['on'] == true;
+          break;
         case 'ready':
           _ready.value = true;
           _ads.ensureLoaded();

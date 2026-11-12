@@ -65,6 +65,7 @@ class App extends StatelessWidget {
 class AdsManager {
   AdsManager(Map<String, dynamic> cfg);
   void Function(bool ready)? onRewardedState;
+  set playing(bool v) {}
   void ensureLoaded() => onRewardedState?.call(true);
   Future<void> init() async {}
   void showInterstitial(void Function() done) => done();
@@ -126,6 +127,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     try {
       final j = jsonDecode(m.message) as Map<String, dynamic>;
       switch (j['t']) {
+        case 'play':
+          break;
         case 'ready':
           _ready.value = true;
           _ads.ensureLoaded();
