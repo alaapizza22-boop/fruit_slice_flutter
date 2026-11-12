@@ -110,6 +110,13 @@ gp = b / 'android/gradle.properties'
 if gp.exists():
     gp.write_text(gp.read_text().rstrip('\n') + '\nandroid.enableR8.fullMode=false\n')
 
+# ---- Launch window background (avoid white flash before Flutter draws)
+for d in ('drawable', 'drawable-v21'):
+    lb = b / 'android/app/src/main/res' / d / 'launch_background.xml'
+    if lb.parent.exists():
+        lb.write_text('<?xml version="1.0" encoding="utf-8"?>\n<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n'
+                      '    <item><shape android:shape="rectangle"><solid android:color="#1E120A"/></shape></item>\n</layer-list>\n')
+
 # ---- iOS Info.plist
 pl = b / 'ios/Runner/Info.plist'
 s = pl.read_text()

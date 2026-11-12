@@ -85,6 +85,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    Future<void>.delayed(const Duration(seconds: 12), () => _ready.value = true);
     _ads = AdsManager(widget.cfg);
     _ads.init().catchError((Object e) {
       lastError.value = 'Ads init: $e';
@@ -112,10 +113,15 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     }
   }
 
+  final ValueNotifier<bool> _ready = ValueNotifier<bool>(false);
+
   void _onMessage(JavaScriptMessage m) {
     try {
       final j = jsonDecode(m.message) as Map<String, dynamic>;
       switch (j['t']) {
+        case 'ready':
+          _ready.value = true;
+          break;
         case 'vib':
           final n = (j['n'] as num?)?.toInt() ?? 15;
           final ms = n <= 12 ? 15 : (n <= 24 ? 28 : 60);
@@ -174,6 +180,29 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           body: SafeArea(top: false, bottom: false, 
             child: Stack(children: [
               _webWidget(),
+              ValueListenableBuilder<bool>(
+                valueListenable: _ready,
+                builder: (_, ready, __) => IgnorePointer(
+                  ignoring: ready,
+                  child: AnimatedOpacity(
+                    opacity: ready ? 0 : 1,
+                    duration: const Duration(milliseconds: 350),
+                    child: Container(
+                      color: const Color(0xFF1E120A),
+                      alignment: Alignment.center,
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        Image.asset('assets/icon.png', width: 120, height: 120),
+                        const SizedBox(height: 24),
+                        const SizedBox(
+                            width: 26,
+                            height: 26,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 3, color: Color(0xFFFFC23C))),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
               ValueListenableBuilder<String?>(
                 valueListenable: lastError,
                 builder: (_, err, __) => err == null

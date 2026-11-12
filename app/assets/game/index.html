@@ -190,7 +190,7 @@ html,body{margin:0}
       <h2>How to play</h2>
       <div class="how">
         <div><em>1</em>Swipe your finger across fruit to slice it. Slice several in one swipe for combos.</div>
-        <div><em>2</em>Never touch a bomb. In Classic you have 3 lives, so don't let fruit fall.</div>
+        <div><em>2</em>Each bomb costs one of your 3 lives. Missed fruit is fine.</div>
         <div><em>3</em>Golden fruit pays 5×, ice fruit slows time, and split fruit bursts into more.</div>
       </div>
       <button class="btn primary" type="button" data-act="menu">Got it</button>
@@ -816,7 +816,11 @@ function sliceObj(o,ang,ax0,ay0){
   if(o.kind==='bomb'){
     explode(o);
     if(mode==='timed'){setScore(Math.max(0,score-50));pop(o.x,o.y,'-50','#FF8D9B',38,true)}
-    else{endGame('bomb')}
+    else{
+      lives--;renderLives();
+      if(lives<=0)endGame('bomb');
+      else{pop(o.x,o.y,'-1 life','#FF8D9B',38,true);vib([30,20,50])}
+    }
     return;
   }
   const k=o.r/U,def=o.def,cr=Math.cos(o.rot),sr=Math.sin(o.rot),nxw=-Math.sin(ang),nyw=Math.cos(ang);
@@ -991,9 +995,7 @@ function update(dt){
     if(o.vy>0&&o.y>H+o.r*1.5){
       o.sliced=true;
       if(state==='play'&&(mode==='classic'||mode==='level')&&o.kind==='fruit'&&!o.deco&&!(mode==='level'&&LV.type==='fruit'&&o.def.id!==LV.fruit)){
-        lives--;renderLives();sfx('miss');
-        pop(o.x,H-50,'Missed','#FF8D9B',24,false);
-        if(lives<=0)endGame('lives');
+        sfx('miss');pop(o.x,H-50,'Missed','#FF8D9B',22,false);
       }
     }
   }
@@ -1158,12 +1160,12 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(tr
 
 {let taps=0,tt=0;document.getElementById('menu').querySelector('.brand').addEventListener('click',()=>{const n=performance.now();taps=n-tt<700?taps+1:1;tt=n;if(taps>=5){taps=0;fpsOn=!fpsOn;if(!fpsEl){fpsEl=document.createElement('div');fpsEl.style.cssText='position:absolute;left:8px;bottom:8px;z-index:99;font:700 12px monospace;color:#9f9;background:rgba(0,0,0,.6);padding:3px 6px;border-radius:6px;pointer-events:none';stage.appendChild(fpsEl)}fpsEl.hidden=!fpsOn}})}
 document.querySelectorAll('.lh').forEach(i=>{i.src=PHOTO.apple});
-setTimeout(()=>{const sp=$('splash');sp.classList.add('out');setTimeout(()=>{sp.hidden=true},500)},1900);
+setTimeout(()=>{const sp=$('splash');sp.classList.add('out');setTimeout(()=>{sp.hidden=true},500)},NATIVE?1300:1900);
 renderMute();
 loadPhotos().then(()=>{
   FRUITS.forEach(f=>{bodySpr[f.id]=buildSprite(f)});
   FRUITS.forEach(f=>{if(f.mode==='crumbs'){fleshSpr[f.id]=buildFlesh(f);chunkSpr[f.id]=buildChunks(f)}});
-  knifeSpr=makeKnife();ready=true;
+  knifeSpr=makeKnife();ready=true;if(NATIVE)nativeSend({t:'ready'});
   showBest();seedDeco();prewarmPool(NATIVE?14:8);requestAnimationFrame(frame);
 });
 })();

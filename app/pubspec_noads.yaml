@@ -21,6 +21,7 @@ flutter:
   assets:
     - assets/game/index.html
     - assets/app_config.json
+    - assets/icon.png
 
 flutter_launcher_icons:
   android: true
