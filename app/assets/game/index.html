@@ -32,6 +32,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 html,body{margin:0}
 .native body{padding:0}
+.native .logoWrap,.native .overlay h1,.native .lives svg,.native .brand .b2{filter:none!important}
+.native .btn.primary::after{display:none}
+.native .btn,.native .rbtn,.native .chip{box-shadow:none}
+.native .btn.primary{box-shadow:0 3px 0 #9A6208}
 .native .stage{max-width:none;border-radius:0;border:0}
 .native .hud{padding-top:max(26px,env(safe-area-inset-top,0px))}
 .hud{position:absolute;inset:0 0 auto 0;display:flex;align-items:flex-start;justify-content:space-between;
@@ -1081,7 +1085,7 @@ function perfTick(raw){
   if(qN>=50){
     const avg=qAcc/qN;qAcc=0;qN=0;
     if(qHold>0){qHold--;return}
-    if(avg>24&&Q<2){Q++;qHold=2;resize()}
+    if(avg>21&&Q<2){Q++;qHold=2;resize()}
   }
 }
 function frame(now){

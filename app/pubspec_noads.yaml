@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   webview_flutter: ^4.9.0
+  webview_flutter_android: any
   vibration: ">=2.0.0"
 
 dev_dependencies:

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vibration/vibration.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 /// Google's public sample ad units. Used whenever "useTestAds" is true in assets/app_config.json.
 const _testInterstitial = {
@@ -149,6 +150,19 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     }
   }
 
+  Widget _webWidget() {
+    final params = PlatformWebViewWidgetCreationParams(
+        controller: _web.platform, layoutDirection: TextDirection.ltr);
+    if (Platform.isAndroid) {
+      return WebViewWidget.fromPlatformCreationParams(
+        params: AndroidWebViewWidgetCreationParams
+            .fromPlatformWebViewWidgetCreationParams(params,
+                displayWithHybridComposition: true),
+      );
+    }
+    return WebViewWidget(controller: _web);
+  }
+
   @override
   Widget build(BuildContext context) => PopScope(
         canPop: false,
@@ -159,7 +173,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           backgroundColor: const Color(0xFF1E120A),
           body: SafeArea(top: false, bottom: false, 
             child: Stack(children: [
-              WebViewWidget(controller: _web),
+              _webWidget(),
               ValueListenableBuilder<String?>(
                 valueListenable: lastError,
                 builder: (_, err, __) => err == null
