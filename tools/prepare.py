@@ -94,10 +94,21 @@ for f in ('android/app/build.gradle.kts', 'android/app/build.gradle'):
     if 'checkReleaseBuilds' not in s2:
         s2 = re.sub(r'(^\s*android\s*\{)', r'\1\n    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }', s2, count=1, flags=re.M)
         assert 'checkReleaseBuilds' in s2, 'lint patch failed'
+    # Release shrinking (R8) strips Room's generated classes used by WorkManager (ads SDK) -> crash at launch.
+    if 'isMinifyEnabled' not in s2 and 'minifyEnabled' not in s2:
+        rel = ('isMinifyEnabled = false\n            isShrinkResources = false' if kts
+               else 'minifyEnabled false\n            shrinkResources false')
+        s3 = re.sub(r'(\brelease\s*\{)', lambda m: m.group(1) + '\n            ' + rel, s2, count=1)
+        assert s3 != s2, 'could not disable minify in release buildType'
+        s2 = s3
     if s2 != s:
         p.write_text(s2)
 if not patched:
     print('WARNING: could not patch minSdk; check android/app/build.gradle(.kts)', file=sys.stderr)
+
+gp = b / 'android/gradle.properties'
+if gp.exists():
+    gp.write_text(gp.read_text().rstrip('\n') + '\nandroid.enableR8.fullMode=false\n')
 
 # ---- iOS Info.plist
 pl = b / 'ios/Runner/Info.plist'
