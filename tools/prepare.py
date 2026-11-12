@@ -89,8 +89,13 @@ for f in ('android/app/build.gradle.kts', 'android/app/build.gradle'):
     s2 = re.sub(r'minSdk(Version)?\s*=?\s*flutter\.minSdkVersion',
                 'minSdk = 24' if kts else 'minSdkVersion 24', s)
     if s2 != s:
-        p.write_text(s2)
         patched = True
+    # Lint crashes inside a dependency on CI; it is not needed to produce the APK.
+    if 'checkReleaseBuilds' not in s2:
+        s2 = re.sub(r'(^\s*android\s*\{)', r'\1\n    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }', s2, count=1, flags=re.M)
+        assert 'checkReleaseBuilds' in s2, 'lint patch failed'
+    if s2 != s:
+        p.write_text(s2)
 if not patched:
     print('WARNING: could not patch minSdk; check android/app/build.gradle(.kts)', file=sys.stderr)
 
