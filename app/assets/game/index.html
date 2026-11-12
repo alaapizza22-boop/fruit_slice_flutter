@@ -658,11 +658,11 @@ function slash(id){
   const s=Object.assign({w:.5,c:.3,j:0,sw:1,k:0,h:0,soft:0},SND[id]);
   const w=s.w,cr=s.c,v=.9+Math.random()*.2;
   nz(.13,'bandpass',7000*v*s.sw,2600*v*s.sw,1.1,.55*(1-s.soft*.6),0);
-  nz(.07,'highpass',5200,5200,.7,.28*(1-s.soft*.7),.002);
-  tone('sine',4300*v,3900*v,.06,.025,0);tone('sine',6400*v,6000*v,.05,.015,0);
+  if(!NATIVE){nz(.07,'highpass',5200,5200,.7,.28*(1-s.soft*.7),.002);
+  tone('sine',4300*v,3900*v,.06,.025,0);tone('sine',6400*v,6000*v,.05,.015,0)}
   nz(.1+w*.06,'lowpass',2600,500,.8,.5+w*.3,.012);
   tone('sine',(170-w*50)*v,60,.1+w*.05,.18+w*.2,.012);
-  const n=Math.round(cr*4);
+  const n=NATIVE?Math.min(1,Math.round(cr*4)):Math.round(cr*4);
   for(let i=0;i<n;i++)nz(.012,'highpass',2800+Math.random()*2500,2800,.8,.25*cr,.02+i*.017+Math.random()*.01);
   if(s.j>0)nz(.12+s.j*.08,'bandpass',900,380,.9,.12+.18*s.j,.03);
   if(s.k>0){tone('sine',320*v,170*v,.09,.22*s.k,.01);nz(.025,'bandpass',1800*v,1200,1.4,.35*s.k,.01)}
@@ -1008,8 +1008,8 @@ function update(dt){
   flashes=flashes.filter(f=>f.life>0);
   for(const p of parts){p.x+=p.vx*sdt;p.y+=p.vy*sdt;p.vy+=H*1.4*sdt;if(p.shard)p.rot+=p.vr*sdt;p.life-=sdt/p.dur}
   parts=parts.filter(p=>p.life>0);
-  for(const s of splats)s.life-=dt/2.2;
-  splats=splats.filter(s=>s.life>0);
+  for(const s of splats)s.life-=dt/(NATIVE?1.4:2.2);
+  splats=splats.filter(s=>s.life>0);if(NATIVE&&splats.length>5)splats.splice(0,splats.length-5);
   for(const p of pops){p.life-=dt/p.dur;p.y-=dt*34}
   pops=pops.filter(p=>p.life>0);
   const now=performance.now();
@@ -1029,7 +1029,7 @@ function draw(){
     ctx.globalAlpha=Math.max(0,s.life)*.24;ctx.fillStyle=s.col;
     ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.ang||0);
     ctx.beginPath();ctx.ellipse(0,0,s.r*1.5*(1.1-.1*s.life),s.r*.5,0,0,TAU);ctx.fill();
-    ctx.beginPath();ctx.ellipse(s.r*.6,s.r*.22,s.r*.5,s.r*.16,0,0,TAU);ctx.fill();
+    if(!NATIVE){ctx.beginPath();ctx.ellipse(s.r*.6,s.r*.22,s.r*.5,s.r*.16,0,0,TAU);ctx.fill()}
     ctx.restore();
   }
   ctx.globalAlpha=1;
@@ -1038,6 +1038,7 @@ function draw(){
   for(const p of parts){
     ctx.globalAlpha=Math.max(0,Math.min(1,p.life*1.4));ctx.fillStyle=p.col;
     if(p.shard){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillRect(-p.size,-p.size*.6,p.size*2,p.size*1.2);ctx.restore()}
+    else if(NATIVE){const z=p.size*1.6;ctx.fillRect(p.x-z/2,p.y-z/2,z,z)}
     else{ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,TAU);ctx.fill()}
   }
   ctx.globalAlpha=1;
@@ -1056,7 +1057,7 @@ function draw(){
     const sc=p.size*(1+.35*Math.max(0,(p.life-.8)/.2));
     ctx.font=sc+'px "Lilita One",Impact,sans-serif';
     ctx.lineJoin='round';ctx.lineWidth=Math.max(4,sc*.2);ctx.strokeStyle='#2A1608';
-    ctx.strokeText(p.text,p.x,p.y);
+    if(NATIVE){ctx.fillStyle='#2A1608';ctx.fillText(p.text,p.x+2,p.y+3)}else ctx.strokeText(p.text,p.x,p.y);
     ctx.fillStyle=p.col;ctx.fillText(p.text,p.x,p.y);
   }
   ctx.globalAlpha=1;
@@ -1114,7 +1115,7 @@ cv.addEventListener('pointermove',e=>{
     const p=pos(ev);
     trail.push({x:p.x,y:p.y,t:performance.now()});
     {const dx=p.x-last.x,dy=p.y-last.y;if(dx*dx+dy*dy>4){let d=Math.atan2(dy,dx)-knife.ang;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;knife.ang+=d*.55}knife.x=p.x;knife.y=p.y}
-    if(trail.length>40)trail.shift();
+    if(trail.length>(NATIVE?14:40))trail.shift();
     if(parts.length>(NATIVE?240:400))parts.splice(0,parts.length-(NATIVE?240:400));
     {const sp=Math.hypot(p.x-last.x,p.y-last.y),tn=performance.now();if(sp>14&&tn-lastWhoosh>150&&tn-lastSliceT>120){lastWhoosh=tn;sfx('whoosh',Math.min(1,sp/50))}}
     trySlice(last.x,last.y,p.x,p.y);
@@ -1160,12 +1161,15 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(tr
 
 {let taps=0,tt=0;document.getElementById('menu').querySelector('.brand').addEventListener('click',()=>{const n=performance.now();taps=n-tt<700?taps+1:1;tt=n;if(taps>=5){taps=0;fpsOn=!fpsOn;if(!fpsEl){fpsEl=document.createElement('div');fpsEl.style.cssText='position:absolute;left:8px;bottom:8px;z-index:99;font:700 12px monospace;color:#9f9;background:rgba(0,0,0,.6);padding:3px 6px;border-radius:6px;pointer-events:none';stage.appendChild(fpsEl)}fpsEl.hidden=!fpsOn}})}
 document.querySelectorAll('.lh').forEach(i=>{i.src=PHOTO.apple});
-setTimeout(()=>{const sp=$('splash');sp.classList.add('out');setTimeout(()=>{sp.hidden=true},500)},NATIVE?1300:1900);
+let splashMin=false;
+function splashTry(){if(!(splashMin&&ready))return;const sp=$('splash');if(sp.hidden)return;sp.classList.add('out');setTimeout(()=>{sp.hidden=true},500)}
+setTimeout(()=>{splashMin=true;splashTry()},NATIVE?1500:1900);
+if(NATIVE)requestAnimationFrame(()=>requestAnimationFrame(()=>nativeSend({t:'ready'})));
 renderMute();
 loadPhotos().then(()=>{
   FRUITS.forEach(f=>{bodySpr[f.id]=buildSprite(f)});
   FRUITS.forEach(f=>{if(f.mode==='crumbs'){fleshSpr[f.id]=buildFlesh(f);chunkSpr[f.id]=buildChunks(f)}});
-  knifeSpr=makeKnife();ready=true;if(NATIVE)nativeSend({t:'ready'});
+  knifeSpr=makeKnife();ready=true;splashTry();
   showBest();seedDeco();prewarmPool(NATIVE?14:8);requestAnimationFrame(frame);
 });
 })();

@@ -188,17 +188,20 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                     opacity: ready ? 0 : 1,
                     duration: const Duration(milliseconds: 350),
                     child: Container(
-                      color: const Color(0xFF1E120A),
+                      decoration: const BoxDecoration(
+                        gradient: RadialGradient(
+                          center: Alignment(0, -0.2),
+                          radius: 1.0,
+                          colors: [Color(0xFF5A3A20), Color(0xFF2A1709), Color(0xFF150B05)],
+                          stops: [0.0, 0.62, 1.0],
+                        ),
+                      ),
                       alignment: Alignment.center,
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Image.asset('assets/icon.png', width: 120, height: 120),
-                        const SizedBox(height: 24),
-                        const SizedBox(
-                            width: 26,
-                            height: 26,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 3, color: Color(0xFFFFC23C))),
-                      ]),
+                      child: const SizedBox(
+                          width: 26,
+                          height: 26,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 3, color: Color(0xFFFFC23C))),
                     ),
                   ),
                 ),
