@@ -64,6 +64,8 @@ class App extends StatelessWidget {
 /// Diagnostic build: no ads at all. Every ad request is answered immediately.
 class AdsManager {
   AdsManager(Map<String, dynamic> cfg);
+  void Function(bool ready)? onRewardedState;
+  void ensureLoaded() => onRewardedState?.call(true);
   Future<void> init() async {}
   void showInterstitial(void Function() done) => done();
   void showRewarded(void Function(bool earned) done) => done(true);
@@ -87,6 +89,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     Future<void>.delayed(const Duration(seconds: 12), () => _ready.value = true);
     _ads = AdsManager(widget.cfg);
+    _ads.onRewardedState = (r) {
+      _web.runJavaScript('window.__adState&&window.__adState(${r ? "true" : "false"})');
+    };
     _ads.init().catchError((Object e) {
       lastError.value = 'Ads init: $e';
     });
@@ -110,6 +115,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) {
       _web.runJavaScript('window.__pause&&window.__pause()');
+    } else {
+      _ads.ensureLoaded();
     }
   }
 
@@ -121,6 +128,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       switch (j['t']) {
         case 'ready':
           _ready.value = true;
+          _ads.ensureLoaded();
           break;
         case 'vib':
           final n = (j['n'] as num?)?.toInt() ?? 15;
@@ -187,22 +195,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   child: AnimatedOpacity(
                     opacity: ready ? 0 : 1,
                     duration: const Duration(milliseconds: 350),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: RadialGradient(
-                          center: Alignment(0, -0.2),
-                          radius: 1.0,
-                          colors: [Color(0xFF5A3A20), Color(0xFF2A1709), Color(0xFF150B05)],
-                          stops: [0.0, 0.62, 1.0],
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: const SizedBox(
-                          width: 26,
-                          height: 26,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 3, color: Color(0xFFFFC23C))),
-                    ),
+                    child: const SplashView(),
                   ),
                 ),
               ),
@@ -228,4 +221,95 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           ),
         ),
       );
+}
+
+class _HalfClipper extends CustomClipper<Path> {
+  const _HalfClipper(this.first);
+  final bool first;
+  @override
+  Path getClip(Size s) {
+    final p = Path();
+    if (first) {
+      p..moveTo(0, 0)..lineTo(s.width, 0)..lineTo(0, s.height);
+    } else {
+      p..moveTo(s.width, 0)..lineTo(s.width, s.height)..lineTo(0, s.height);
+    }
+    return p..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+}
+
+/// Same picture as the in-game splash, drawn natively so it shows the moment the app opens.
+class SplashView extends StatelessWidget {
+  const SplashView({super.key});
+
+  Widget _half(bool first) => Transform.translate(
+        offset: first ? const Offset(-5, -5) : const Offset(5, 5),
+        child: Transform.rotate(
+          angle: first ? -0.052 : 0.052,
+          child: ClipPath(
+            clipper: _HalfClipper(first),
+            child: Image.asset('assets/apple.png', width: 112, height: 112, fit: BoxFit.contain),
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final barW = (MediaQuery.of(context).size.width * 0.6).clamp(0.0, 220.0).toDouble();
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment(0, -0.2),
+          radius: 1.0,
+          colors: [Color(0xFF5A3A20), Color(0xFF2A1709), Color(0xFF150B05)],
+          stops: [0.0, 0.62, 1.0],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(width: 112, height: 112, child: Stack(children: [_half(true), _half(false)])),
+          const SizedBox(height: 12),
+          Image.asset('assets/brand_fruit.png', width: 104),
+          const SizedBox(height: 4),
+          Image.asset('assets/brand_slice.png', width: 178),
+          const SizedBox(height: 30),
+          Container(
+            width: barW,
+            height: 8,
+            decoration: BoxDecoration(
+              color: const Color(0x24FBEFD8),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.centerLeft,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 0.3),
+              duration: const Duration(milliseconds: 1800),
+              curve: Curves.easeOut,
+              builder: (_, v, __) => Container(
+                width: barW * v,
+                height: 8,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFFFFD66B), Color(0xFFEE8A1A)]),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text('SHARPENING THE BLADES…',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.4,
+                  color: Color(0xFFD9C3A3),
+                  decoration: TextDecoration.none)),
+        ],
+      ),
+    );
+  }
 }

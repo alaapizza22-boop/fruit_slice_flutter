@@ -22,6 +22,9 @@ flutter:
     - assets/game/index.html
     - assets/app_config.json
     - assets/icon.png
+    - assets/apple.png
+    - assets/brand_fruit.png
+    - assets/brand_slice.png
 
 flutter_launcher_icons:
   android: true
